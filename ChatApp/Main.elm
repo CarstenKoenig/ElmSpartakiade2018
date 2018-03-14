@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html as H exposing (Html)
 import Html.Attributes as Attr
 import Layout exposing (..)
+import Bootstrap as BS
 
 
 main : Html msg
@@ -16,20 +17,20 @@ main =
 
 login : Html msg
 login =
-    H.form
-        []
-        [ H.input
-            [ Attr.type_ "text"
-            , Attr.placeholder "Dein Name?"
+    H.form []
+        [ BS.formRow []
+            [ BS.col []
+                [ BS.textInput
+                    [ Attr.placeholder "Dein Name?" ]
+                    []
+                ]
+            , BS.col []
+                [ BS.passwordInput
+                    [ Attr.placeholder "Passwort?" ]
+                    []
+                ]
+            , BS.colAuto []
+                [ BS.submit [] [ H.text "login" ]
+                ]
             ]
-            []
-        , H.input
-            [ Attr.type_ "password"
-            , Attr.placeholder "Passwort?"
-            ]
-            []
-        , H.button
-            [ Attr.type_ "submit"
-            ]
-            [ H.text "login" ]
         ]
