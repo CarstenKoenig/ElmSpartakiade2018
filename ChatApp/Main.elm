@@ -20,6 +20,12 @@ baseUrl =
     "https://yiherfva.cloud.dropstack.run/"
 
 
+wsUrl : String
+wsUrl =
+    -- "ws://localhost:8081"
+    "wss://yiherfva.cloud.dropstack.run/"
+
+
 type alias Model =
     { anmeldung : Anm.Anmeldung BenutzerInfo
     , fehler : Maybe String
@@ -141,8 +147,19 @@ subscriptions model =
     let
         clockSub =
             Time.every Time.second UpdateTime
+
+        inMsg =
+            Result.map List.singleton
+                >> Result.mapError (always Http.NetworkError)
+                >> NachrichtenResult
+
+        webSub =
+            model.anmeldung
+                |> Anm.auswerten
+                    (always <| Api.webSocketSubscription wsUrl inMsg Nothing)
+                    (\info -> Api.webSocketSubscription wsUrl inMsg (Just info.id))
     in
-        clockSub
+        Sub.batch [ clockSub, webSub ]
 
 
 view : Model -> Html Msg

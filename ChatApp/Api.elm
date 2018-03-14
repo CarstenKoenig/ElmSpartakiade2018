@@ -10,6 +10,7 @@ module Api
         , ChatNachricht
         , SystemNachricht
         , getNachrichten
+        , webSocketSubscription
         )
 
 import Http
@@ -17,6 +18,7 @@ import Json.Decode as Json
 import Json.Encode as Enc
 import Task
 import Date exposing (Date)
+import WebSocket as WS
 
 
 type BenutzerId
@@ -175,3 +177,17 @@ messageDecoder =
             (Json.field "_msgId" Json.int)
             (Json.field "_msgTime" decodeDate)
             (Json.field "_msgData" decodeData)
+
+
+webSocketSubscription : String -> (Result String Message -> msg) -> Maybe BenutzerId -> Sub msg
+webSocketSubscription baseUrl inMsg userOpt =
+    let
+        decode =
+            Json.decodeString messageDecoder >> inMsg
+    in
+        case userOpt of
+            Just (BenutzerId id) ->
+                WS.listen (baseUrl ++ "/messages/stream/" ++ id) decode
+
+            Nothing ->
+                WS.listen (baseUrl ++ "/messages/stream/public") decode
