@@ -47,6 +47,13 @@ col attrs children =
         children
 
 
+colMd : Int -> List (Attribute msg) -> List (Html msg) -> Html msg
+colMd size attrs children =
+    H.div
+        (Attr.class ("col-md-" ++ toString size) :: attrs)
+        children
+
+
 colAuto : List (Attribute msg) -> List (Html msg) -> Html msg
 colAuto attrs children =
     H.div
@@ -59,3 +66,16 @@ formRow attrs children =
     H.div
         (Attr.class "form-row align-items-center" :: attrs)
         children
+
+
+card : String -> List (Attribute msg) -> List (Html msg) -> List (Html msg) -> Html msg
+card classes attrs header body =
+    H.div
+        (Attr.class ("card " ++ classes) :: attrs)
+        [ H.div
+            [ Attr.class "card-header" ]
+            header
+        , H.div
+            [ Attr.class "card-body" ]
+            body
+        ]
