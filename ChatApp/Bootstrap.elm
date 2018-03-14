@@ -68,6 +68,13 @@ formRow attrs children =
         children
 
 
+row : List (Attribute msg) -> List (Html msg) -> Html msg
+row attrs children =
+    H.div
+        (Attr.class "row" :: attrs)
+        children
+
+
 card : String -> List (Attribute msg) -> List (Html msg) -> List (Html msg) -> Html msg
 card classes attrs header body =
     H.div

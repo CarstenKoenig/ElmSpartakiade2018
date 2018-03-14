@@ -9,7 +9,7 @@ module Api
         , MessageBody(..)
         , ChatNachricht
         , SystemNachricht
-        , getMessages
+        , getNachrichten
         )
 
 import Http
@@ -117,8 +117,8 @@ type MessageBody
     | System SystemNachricht
 
 
-getMessages : String -> (Result Http.Error (List Message) -> msg) -> Maybe BenutzerId -> Maybe Int -> Cmd msg
-getMessages baseUrl inMsg userOpt fromMsgNo =
+getNachrichten : String -> (Result Http.Error (List Message) -> msg) -> Maybe BenutzerId -> Maybe Int -> Cmd msg
+getNachrichten baseUrl inMsg userOpt fromMsgNo =
     getMessagesRequest baseUrl userOpt fromMsgNo
         |> Http.send inMsg
 
