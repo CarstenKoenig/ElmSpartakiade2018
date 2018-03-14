@@ -25,9 +25,7 @@ viewLayout content =
         H.div
             []
             [ viewNavbar content.navbar
-            , H.div
-                [ Attr.class "container scrollable"
-                ]
+            , H.div [ Attr.class "container scrollable" ]
                 (viewToolbar content.toolbar :: content.body ++ [ bottomSpace ])
             ]
 

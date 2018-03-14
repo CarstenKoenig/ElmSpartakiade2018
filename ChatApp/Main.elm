@@ -1,17 +1,18 @@
 module Main exposing (..)
 
+import Anmeldung as Anm exposing (UserName)
+import Api exposing (BenutzerId, BenutzerInfo, MessageId, Message)
+import Bootstrap as BS
+import Date exposing (Date)
+import Dict exposing (Dict)
 import Html as H exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Ev
-import Layout exposing (..)
-import Bootstrap as BS
-import Anmeldung as Anm exposing (UserName)
 import Http
-import Api exposing (BenutzerId, BenutzerInfo, MessageId, Message)
-import Dict exposing (Dict)
-import Time exposing (Time)
-import Date exposing (Date)
+import Keyboard as Kbd
+import Layout exposing (..)
 import Markdown as MD
+import Time exposing (Time)
 
 
 baseUrl : String
@@ -26,11 +27,25 @@ wsUrl =
     "wss://yiherfva.cloud.dropstack.run/"
 
 
+ctrlKeyCode : Kbd.KeyCode
+ctrlKeyCode =
+    17
+
+
+enterKeyCode : Kbd.KeyCode
+enterKeyCode =
+    13
+
+
 type alias Model =
     { anmeldung : Anm.Anmeldung BenutzerInfo
     , fehler : Maybe String
     , nachrichten : Dict MessageId Message
     , aktuelleZeit : Maybe Time
+    , nachrichtText : String
+    , nachrichtTextFocused : Bool
+    , nachrichtTextMouseOver : Bool
+    , ctrlKeyPressed : Bool
     }
 
 
@@ -44,6 +59,13 @@ type Msg
     | NachrichtenResult (Result Http.Error (List Message))
     | DismissError
     | UpdateTime Time
+    | NachrichtSchicken
+    | NachrichtSchickenResult (Result Http.Error ())
+    | NachrichtTextGeändert String
+    | NachrichtTextOver Bool
+    | NachrichtTextFocus Bool
+    | KeyDown Kbd.KeyCode
+    | KeyUp Kbd.KeyCode
 
 
 init : ( Model, Cmd Msg )
@@ -52,6 +74,10 @@ init =
       , fehler = Nothing
       , nachrichten = Dict.empty
       , aktuelleZeit = Nothing
+      , nachrichtText = ""
+      , nachrichtTextFocused = False
+      , nachrichtTextMouseOver = False
+      , ctrlKeyPressed = False
       }
     , Api.getNachrichten baseUrl NachrichtenResult Nothing Nothing
     )
@@ -141,6 +167,52 @@ update msg model =
             , Cmd.none
             )
 
+        NachrichtSchicken ->
+            nachrichtSchicken model
+
+        NachrichtSchickenResult (Ok ()) ->
+            ( model, Cmd.none )
+
+        NachrichtSchickenResult (Err err) ->
+            ( { model | fehler = Just (toString err) }, Cmd.none )
+
+        NachrichtTextGeändert text ->
+            ( { model | nachrichtText = text }, Cmd.none )
+
+        NachrichtTextFocus focused ->
+            ( { model | nachrichtTextFocused = focused }, Cmd.none )
+
+        NachrichtTextOver over ->
+            ( { model | nachrichtTextMouseOver = over }, Cmd.none )
+
+        KeyDown keyCode ->
+            if keyCode == ctrlKeyCode then
+                { model | ctrlKeyPressed = True } ! []
+            else if keyCode == enterKeyCode && model.ctrlKeyPressed && model.nachrichtTextFocused then
+                nachrichtSchicken model
+            else
+                ( model, Cmd.none )
+
+        KeyUp keyCode ->
+            if keyCode == ctrlKeyCode then
+                { model | ctrlKeyPressed = False } ! []
+            else
+                model ! []
+
+
+nachrichtSchicken : Model -> ( Model, Cmd Msg )
+nachrichtSchicken model =
+    if model.nachrichtText == "" then
+        ( model, Cmd.none )
+    else
+        let
+            cmd =
+                model.anmeldung
+                    |> Anm.auswerten (always Cmd.none)
+                        (\info -> Api.nachrichtSchicken baseUrl NachrichtSchickenResult info.id model.nachrichtText)
+        in
+            { model | nachrichtText = "" } ! [ cmd ]
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -158,15 +230,18 @@ subscriptions model =
                 |> Anm.auswerten
                     (always <| Api.webSocketSubscription wsUrl inMsg Nothing)
                     (\info -> Api.webSocketSubscription wsUrl inMsg (Just info.id))
+
+        kbdSub =
+            Sub.batch [ Kbd.downs KeyDown, Kbd.ups KeyUp ]
     in
-        Sub.batch [ clockSub, webSub ]
+        Sub.batch [ clockSub, webSub, kbdSub ]
 
 
 view : Model -> Html Msg
 view model =
     viewLayout
         { navbar = Anm.auswerten viewLogin viewEingeloggt model.anmeldung
-        , toolbar = [ H.text "hier wird die Toolbar sein" ]
+        , toolbar = [ viewInput model ]
         , body =
             (viewError model.fehler
                 :: (model.anmeldung
@@ -339,3 +414,55 @@ rawHtml =
             }
     in
         MD.toHtmlWith options []
+
+
+viewInput : Model -> Html Msg
+viewInput model =
+    let
+        isDisabled =
+            model.anmeldung
+                |> Anm.auswerten (always True) (always False)
+
+        textRows =
+            if not isDisabled && (model.nachrichtTextFocused || model.nachrichtTextMouseOver) then
+                5
+            else
+                1
+    in
+        H.form
+            (if isDisabled then
+                [ Attr.class "w-100" ]
+             else
+                [ Attr.class "w-100"
+                , Ev.onSubmit NachrichtSchicken
+                , Ev.onMouseOver (NachrichtTextOver True)
+                , Ev.onMouseOut (NachrichtTextOver False)
+                ]
+            )
+            [ BS.formRow []
+                [ BS.col []
+                    [ BS.textArea textRows
+                        [ Attr.placeholder "Nachricht..."
+                        , Attr.value model.nachrichtText
+                        , Attr.disabled isDisabled
+                        , Ev.onInput NachrichtTextGeändert
+                        , Ev.onFocus (NachrichtTextFocus True)
+                        , Ev.onBlur (NachrichtTextFocus False)
+                        ]
+                        []
+                    ]
+                , BS.colAuto []
+                    [ BS.submit
+                        [ Attr.classList
+                            [ ( "btn-outline-success", not isDisabled )
+                            , ( "btn-outline-warning", not isDisabled && model.nachrichtText == "" )
+                            , ( "btn-outline-danger", isDisabled )
+                            ]
+                        , Ev.onMouseOver (NachrichtTextOver True)
+                        , Ev.onMouseOut (NachrichtTextOver False)
+                        , Attr.disabled (isDisabled || model.nachrichtText == "")
+                        ]
+                        [ H.text "schicken" ]
+                    ]
+                ]
+            ]

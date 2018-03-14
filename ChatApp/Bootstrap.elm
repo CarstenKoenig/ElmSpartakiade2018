@@ -18,6 +18,17 @@ textInput attrs children =
         []
 
 
+textArea : Int -> List (Attribute msg) -> List (Html msg) -> Html msg
+textArea rows attrs children =
+    H.textarea
+        ([ Attr.class "form-control mb-2"
+         , Attr.rows rows
+         ]
+            ++ attrs
+        )
+        children
+
+
 passwordInput : List (Attribute msg) -> List (Html msg) -> Html msg
 passwordInput attrs children =
     input
