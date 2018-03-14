@@ -1,9 +1,10 @@
-module Api exposing (BenutzerId, BenutzerInfo, login, logout)
+module Api exposing (BenutzerId, BenutzerInfo, login, logout, MessageId, Message, MessageBody(..), ChatNachricht, SystemNachricht)
 
 import Http
 import Json.Decode as Json
 import Json.Encode as Enc
 import Task
+import Date exposing (Date)
 
 
 type BenutzerId
@@ -73,3 +74,68 @@ benutzerInfoRequest baseUrl (BenutzerId id) =
                 (Json.field "isonline" Json.bool)
     in
         Http.get (baseUrl ++ "/users/" ++ id) userDecoder
+
+
+type alias MessageId =
+    Int
+
+
+type alias Message =
+    { messageId : MessageId
+    , time : Date
+    , body : MessageBody
+    }
+
+
+type alias ChatNachricht =
+    { sender : String
+    , isPrivate : Bool
+    , htmlBody : String
+    , textBody : String
+    }
+
+
+type alias SystemNachricht =
+    { htmlBody : String
+    }
+
+
+type MessageBody
+    = Chat ChatNachricht
+    | System SystemNachricht
+
+
+messageDecoder : Json.Decoder Message
+messageDecoder =
+    let
+        decodeDate =
+            Json.string
+                |> Json.andThen
+                    (\dateStr ->
+                        case Date.fromString dateStr of
+                            Ok date ->
+                                Json.succeed date
+
+                            Err err ->
+                                Json.fail err
+                    )
+
+        decodeData =
+            Json.oneOf
+                [ Json.map
+                    SystemNachricht
+                    (Json.field "_sysBody" Json.string)
+                    |> Json.map System
+                , Json.map4
+                    ChatNachricht
+                    (Json.field "_msgSender" Json.string)
+                    (Json.field "_msgPrivate" Json.bool)
+                    (Json.field "_msgHtmlBody" Json.string)
+                    (Json.field "_msgText" Json.string)
+                    |> Json.map Chat
+                ]
+    in
+        Json.map3 Message
+            (Json.field "_msgId" Json.int)
+            (Json.field "_msgTime" decodeDate)
+            (Json.field "_msgData" decodeData)
