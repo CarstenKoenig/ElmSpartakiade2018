@@ -24,6 +24,7 @@ type alias Model =
     { anmeldung : Anm.Anmeldung BenutzerInfo
     , fehler : Maybe String
     , nachrichten : Dict MessageId Message
+    , aktuelleZeit : Maybe Time
     }
 
 
@@ -36,6 +37,7 @@ type Msg
     | LogoutResult (Result Http.Error ())
     | NachrichtenResult (Result Http.Error (List Message))
     | DismissError
+    | UpdateTime Time
 
 
 init : ( Model, Cmd Msg )
@@ -43,6 +45,7 @@ init =
     ( { anmeldung = Anm.initLogin
       , fehler = Nothing
       , nachrichten = Dict.empty
+      , aktuelleZeit = Nothing
       }
     , Api.getNachrichten baseUrl NachrichtenResult Nothing Nothing
     )
@@ -66,6 +69,9 @@ main =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        UpdateTime now ->
+            ( { model | aktuelleZeit = Just now }, Cmd.none )
+
         DismissError ->
             ( { model | fehler = Nothing }, Cmd.none )
 
@@ -132,7 +138,11 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    let
+        clockSub =
+            Time.every Time.second UpdateTime
+    in
+        clockSub
 
 
 view : Model -> Html Msg
@@ -144,8 +154,8 @@ view model =
             (viewError model.fehler
                 :: (model.anmeldung
                         |> Anm.auswerten
-                            (always <| viewMessages Nothing 0 model.nachrichten)
-                            (\info -> viewMessages (Just info.name) 0 model.nachrichten)
+                            (always <| viewMessages Nothing model.aktuelleZeit model.nachrichten)
+                            (\info -> viewMessages (Just info.name) model.aktuelleZeit model.nachrichten)
                    )
             )
         }
@@ -205,11 +215,11 @@ viewError err =
                 [ H.p [] [ H.strong [] [ H.text "error: " ], H.text text ] ]
 
 
-viewMessages : Maybe UserName -> Time -> Dict MessageId Message -> List (Html Msg)
+viewMessages : Maybe UserName -> Maybe Time -> Dict MessageId Message -> List (Html Msg)
 viewMessages angemeldet now =
     Dict.values
         >> List.reverse
-        >> List.map (viewMessage angemeldet now)
+        >> List.map (viewMessage angemeldet (now |> Maybe.withDefault 0))
 
 
 viewMessage : Maybe UserName -> Time -> Message -> Html Msg
