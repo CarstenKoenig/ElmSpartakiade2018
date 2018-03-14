@@ -1,0 +1,38 @@
+dist
+dist-*
+cabal-dev
+*.o
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+.HTF/
+
+## ignore cabal in favor of package.yaml
+LambdaChat.cabal
+
+Haskell/static/
+Haskell/dist/
+
+## elm
+elm-stuff/
+chat.js
+
+## purescript
+
+## no app state
+state.data
+
+# don't include the Workshop Dokumentation for now
+Workshop.md
