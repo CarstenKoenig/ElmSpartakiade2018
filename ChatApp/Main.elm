@@ -16,6 +16,8 @@ type alias Model =
 type Msg
     = LoginNameGeändert String
     | LoginPasswortGeändert String
+    | Login
+    | Logout
 
 
 init : Model
@@ -47,6 +49,14 @@ update msg model =
         LoginPasswortGeändert passwort ->
             { model | anmeldung = Anm.loginPasswortSetzen passwort model.anmeldung }
 
+        Login ->
+            Anm.loginEingabe model.anmeldung
+                |> Maybe.map (\eingabe -> { model | anmeldung = Anm.initEingeloggt eingabe.loginName })
+                |> Maybe.withDefault model
+
+        Logout ->
+            { model | anmeldung = Anm.initLogin }
+
 
 view : Model -> Html Msg
 view model =
@@ -59,7 +69,7 @@ view model =
 
 viewLogin : Anm.LoginEingabe -> List (Html Msg)
 viewLogin model =
-    [ H.form []
+    [ H.form [ Ev.onSubmit Login ]
         [ BS.formRow []
             [ BS.col []
                 [ BS.textInput
@@ -87,11 +97,13 @@ viewLogin model =
     ]
 
 
-viewEingeloggt : UserName -> List (Html msg)
+viewEingeloggt : UserName -> List (Html Msg)
 viewEingeloggt userName =
     [ H.span [ Attr.class "navbar-text" ] [ H.text "Hallo, ", H.strong [] [ H.text userName ] ]
     , H.form
-        [ Attr.class "form-inline" ]
+        [ Attr.class "form-inline"
+        , Ev.onSubmit Logout
+        ]
         [ BS.submit [] [ H.text "logout" ]
         ]
     ]
