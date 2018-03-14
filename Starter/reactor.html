@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Elm eingebettet</title>
+</head>
+
+<body>
+  <div id="main"></div>
+  <script src="_compile/Main.elm"></script>
+  <script>
+    var node = document.getElementById('main');
+    var app = Elm.Main.embed(node);
+  </script>
+</body>
+
+</html>
