@@ -7,6 +7,12 @@ Web:     http://spartakiade.org/
 
 Twitter: http://twitter.com/spartakiade_org
 
+---
+
+[Workshop-Log](./Workshop.md)
+
+---
+
 ## Linksammlung
 
 ### Elm
