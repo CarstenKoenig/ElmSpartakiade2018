@@ -6,8 +6,45 @@ import Layout exposing (..)
 import Bootstrap as BS
 
 
-main : Html msg
+type alias Model =
+    { loginName : String
+    , loginPasswort : String
+    }
+
+
+type Msg
+    = LoginNameGeändert String
+    | LoginPasswortGeändert String
+
+
+init : Model
+init =
+    { loginName = ""
+    , loginPasswort = ""
+    }
+
+
+main : Program Never Model Msg
 main =
+    H.beginnerProgram
+        { model = init
+        , view = view
+        , update = update
+        }
+
+
+update : Msg -> Model -> Model
+update msg model =
+    case msg of
+        LoginNameGeändert name ->
+            { model | loginName = name }
+
+        LoginPasswortGeändert passwort ->
+            { model | loginPasswort = passwort }
+
+
+view : Model -> Html msg
+view model =
     viewLayout
         { navbar = [ login ]
         , toolbar = [ H.text "hier wird die Toolbar sein" ]
