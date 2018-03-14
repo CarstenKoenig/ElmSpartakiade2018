@@ -1,4 +1,16 @@
-module Api exposing (BenutzerId, BenutzerInfo, login, logout, MessageId, Message, MessageBody(..), ChatNachricht, SystemNachricht)
+module Api
+    exposing
+        ( BenutzerId
+        , BenutzerInfo
+        , login
+        , logout
+        , MessageId
+        , Message
+        , MessageBody(..)
+        , ChatNachricht
+        , SystemNachricht
+        , getMessages
+        )
 
 import Http
 import Json.Decode as Json
@@ -103,6 +115,30 @@ type alias SystemNachricht =
 type MessageBody
     = Chat ChatNachricht
     | System SystemNachricht
+
+
+getMessages : String -> (Result Http.Error (List Message) -> msg) -> Maybe BenutzerId -> Maybe Int -> Cmd msg
+getMessages baseUrl inMsg userOpt fromMsgNo =
+    getMessagesRequest baseUrl userOpt fromMsgNo
+        |> Http.send inMsg
+
+
+getMessagesRequest : String -> Maybe BenutzerId -> Maybe Int -> Http.Request (List Message)
+getMessagesRequest baseUrl userOpt fromMsgNo =
+    let
+        query =
+            Maybe.map (\no -> "?fromid=" ++ toString no) fromMsgNo
+                |> Maybe.withDefault ""
+
+        uri =
+            case userOpt of
+                Just (BenutzerId id) ->
+                    baseUrl ++ "/messages/" ++ id ++ query
+
+                Nothing ->
+                    baseUrl ++ "/messages/public" ++ query
+    in
+        Http.get uri (Json.list messageDecoder)
 
 
 messageDecoder : Json.Decoder Message
