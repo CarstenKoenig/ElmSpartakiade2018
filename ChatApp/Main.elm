@@ -12,6 +12,7 @@ import Http
 import Keyboard as Kbd
 import Layout exposing (..)
 import Markdown as MD
+import Notifications as N
 import Time exposing (Time)
 
 
@@ -56,7 +57,7 @@ type Msg
     | Logout
     | LoginResult (Result Http.Error BenutzerInfo)
     | LogoutResult (Result Http.Error ())
-    | NachrichtenResult (Result Http.Error (List Message))
+    | NachrichtenResult Bool (Result Http.Error (List Message))
     | DismissError
     | UpdateTime Time
     | NachrichtSchicken
@@ -79,7 +80,7 @@ init =
       , nachrichtTextMouseOver = False
       , ctrlKeyPressed = False
       }
-    , Api.getNachrichten baseUrl NachrichtenResult Nothing Nothing
+    , Api.getNachrichten baseUrl (NachrichtenResult False) Nothing Nothing
     )
 
 
@@ -132,7 +133,10 @@ update msg model =
                 | fehler = Nothing
                 , anmeldung = Anm.initEingeloggt info
               }
-            , Api.getNachrichten baseUrl NachrichtenResult (Just <| info.id) Nothing
+            , Cmd.batch
+                [ Api.getNachrichten baseUrl (NachrichtenResult False) (Just <| info.id) Nothing
+                , N.showNotification (N.Notification ("Hallo " ++ info.name) "")
+                ]
             )
 
         LoginResult (Err err) ->
@@ -149,17 +153,36 @@ update msg model =
         LogoutResult (Err err) ->
             ( { model | fehler = Just (toString err) }, Cmd.none )
 
-        NachrichtenResult (Ok msgs) ->
+        NachrichtenResult istAktuell (Ok msgs) ->
             let
                 mapMsg msg =
                     ( msg.messageId, msg )
 
+                mapNotify msg =
+                    case msg.body of
+                        Api.Chat chat ->
+                            if Just chat.sender /= Maybe.map (\info -> info.name) (Anm.getInfo model.anmeldung) then
+                                Just (N.Notification ("Nachricht von " ++ chat.sender) chat.textBody)
+                            else
+                                Nothing
+
+                        Api.System _ ->
+                            Nothing
+
                 neueNachrichten =
                     Dict.union (Dict.fromList <| List.map mapMsg msgs) model.nachrichten
-            in
-                ( { model | nachrichten = neueNachrichten }, Cmd.none )
 
-        NachrichtenResult (Err err) ->
+                cmdNotifications =
+                    if istAktuell then
+                        List.filterMap mapNotify msgs
+                            |> List.map N.showNotification
+                            |> Cmd.batch
+                    else
+                        Cmd.none
+            in
+                ( { model | nachrichten = neueNachrichten }, cmdNotifications )
+
+        NachrichtenResult _ (Err err) ->
             ( { model
                 | fehler = Just (toString err)
                 , nachrichten = Dict.empty
@@ -223,7 +246,7 @@ subscriptions model =
         inMsg =
             Result.map List.singleton
                 >> Result.mapError (always Http.NetworkError)
-                >> NachrichtenResult
+                >> NachrichtenResult True
 
         webSub =
             model.anmeldung
