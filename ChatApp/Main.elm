@@ -94,7 +94,7 @@ update msg model =
                 | fehler = Nothing
                 , anmeldung = Anm.initEingeloggt info
               }
-            , Cmd.none
+            , Api.getNachrichten baseUrl NachrichtenResult (Just <| info.id) Nothing
             )
 
         LoginResult (Err err) ->
