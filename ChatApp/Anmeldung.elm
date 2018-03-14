@@ -7,7 +7,7 @@ module Anmeldung
         , initEingeloggt
         , auswerten
         , loginEingabe
-        , eingeloggterBenutzer
+        , getInfo
         , loginNameSetzen
         , loginPasswortSetzen
         )
@@ -17,9 +17,9 @@ type alias UserName =
     String
 
 
-type Anmeldung
+type Anmeldung info
     = Login LoginEingabe
-    | Eingeloggt UserName
+    | Eingeloggt info
 
 
 type alias LoginEingabe =
@@ -28,17 +28,17 @@ type alias LoginEingabe =
     }
 
 
-initLogin : Anmeldung
+initLogin : Anmeldung info
 initLogin =
     Login (LoginEingabe "" "")
 
 
-initEingeloggt : UserName -> Anmeldung
-initEingeloggt userName =
-    Eingeloggt userName
+initEingeloggt : info -> Anmeldung info
+initEingeloggt info =
+    Eingeloggt info
 
 
-auswerten : (LoginEingabe -> a) -> (UserName -> a) -> Anmeldung -> a
+auswerten : (LoginEingabe -> a) -> (info -> a) -> Anmeldung info -> a
 auswerten wennLogin wennEingeloggt anmeldung =
     case anmeldung of
         Login login ->
@@ -48,17 +48,17 @@ auswerten wennLogin wennEingeloggt anmeldung =
             wennEingeloggt name
 
 
-loginEingabe : Anmeldung -> Maybe LoginEingabe
+loginEingabe : Anmeldung info -> Maybe LoginEingabe
 loginEingabe =
     auswerten Just (always Nothing)
 
 
-eingeloggterBenutzer : Anmeldung -> Maybe UserName
-eingeloggterBenutzer =
+getInfo : Anmeldung info -> Maybe info
+getInfo =
     auswerten (always Nothing) Just
 
 
-loginNameSetzen : UserName -> Anmeldung -> Anmeldung
+loginNameSetzen : UserName -> Anmeldung info -> Anmeldung info
 loginNameSetzen name anmeldung =
     anmeldung
         |> auswerten
@@ -66,7 +66,7 @@ loginNameSetzen name anmeldung =
             (always anmeldung)
 
 
-loginPasswortSetzen : String -> Anmeldung -> Anmeldung
+loginPasswortSetzen : String -> Anmeldung info -> Anmeldung info
 loginPasswortSetzen passwort anmeldung =
     anmeldung
         |> auswerten
