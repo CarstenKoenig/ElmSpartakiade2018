@@ -1,0 +1,21 @@
+[
+  {
+    "_msgTime": "2018-03-13T18:02:56.415774Z",
+    "_msgId": 1,
+    "_msgData": {
+      "tag": "Post",
+      "_msgSender": "Carsten",
+      "_msgPrivate": false,
+      "_msgText": "## wir sehen uns zur [Spartakiade](https://spartakiade.org)\n\n![Spartakiade](https://spartakiade.org/img/profile-picture-hover.png)\n\n---\n\nWenn Du willst hinterlasse doch einfach eine Nachricht hier",
+      "_msgHtmlBody": "<h2>wir sehen uns zur <a href=\"https://spartakiade.org\">Spartakiade</a></h2><p><img src=\"https://spartakiade.org/img/profile-picture-hover.png\" alt=\"Spartakiade\"></p><hr><p>Wenn Du willst hinterlasse doch einfach eine Nachricht hier</p>"
+    }
+  },
+  {
+    "_msgTime": "2018-03-13T18:01:09.501028Z",
+    "_msgId": 0,
+    "_msgData": {
+      "tag": "System",
+      "_sysBody": "<p>user <b>Carsten</b> connected</p>"
+    }
+  }
+]
