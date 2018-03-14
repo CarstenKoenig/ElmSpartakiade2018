@@ -20,10 +20,11 @@ type Msg
     | Logout
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    { anmeldung = Anm.initLogin
-    }
+    ( { anmeldung = Anm.initLogin }
+    , Cmd.none
+    )
 
 
 kannEinloggen : Anm.LoginEingabe -> Bool
@@ -33,29 +34,37 @@ kannEinloggen model =
 
 main : Program Never Model Msg
 main =
-    H.beginnerProgram
-        { model = init
+    H.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LoginNameGeändert name ->
-            { model | anmeldung = Anm.loginNameSetzen name model.anmeldung }
+            ( { model | anmeldung = Anm.loginNameSetzen name model.anmeldung }, Cmd.none )
 
         LoginPasswortGeändert passwort ->
-            { model | anmeldung = Anm.loginPasswortSetzen passwort model.anmeldung }
+            ( { model | anmeldung = Anm.loginPasswortSetzen passwort model.anmeldung }, Cmd.none )
 
         Login ->
-            Anm.loginEingabe model.anmeldung
+            ( Anm.loginEingabe model.anmeldung
                 |> Maybe.map (\eingabe -> { model | anmeldung = Anm.initEingeloggt eingabe.loginName })
                 |> Maybe.withDefault model
+            , Cmd.none
+            )
 
         Logout ->
-            { model | anmeldung = Anm.initLogin }
+            ( { model | anmeldung = Anm.initLogin }, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
 
 
 view : Model -> Html Msg
