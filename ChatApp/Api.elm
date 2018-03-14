@@ -11,6 +11,7 @@ module Api
         , SystemNachricht
         , getNachrichten
         , webSocketSubscription
+        , nachrichtSchicken
         )
 
 import Http
@@ -191,3 +192,29 @@ webSocketSubscription baseUrl inMsg userOpt =
 
             Nothing ->
                 WS.listen (baseUrl ++ "/messages/stream/public") decode
+
+
+nachrichtSchicken : String -> (Result Http.Error () -> msg) -> BenutzerId -> String -> Cmd msg
+nachrichtSchicken baseUrl inMsg senderId nachricht =
+    postMessageRequest baseUrl senderId nachricht
+        |> Http.send inMsg
+
+
+postMessageRequest : String -> BenutzerId -> String -> Http.Request ()
+postMessageRequest baseUrl (BenutzerId id) message =
+    let
+        msg =
+            Enc.object
+                [ ( "_sendSender", Enc.string id )
+                , ( "_sendText", Enc.string message )
+                ]
+    in
+        Http.request
+            { method = "POST"
+            , headers = []
+            , url = baseUrl ++ "/messages"
+            , body = Http.jsonBody msg
+            , expect = Http.expectStringResponse (always <| Ok ())
+            , timeout = Nothing
+            , withCredentials = False
+            }
