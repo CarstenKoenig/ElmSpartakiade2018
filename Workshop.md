@@ -1,3 +1,12 @@
+---
+title: "Elm Workshop - Spartakiade 2018"
+author: Carsten König
+date: März 2018
+geometry: margin=2cm
+output: pdf_document
+papersize: a4
+---
+
 # Einführung
 
 ## Start
