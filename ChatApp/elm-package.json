@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Demoprojekt für die Spartakiade 2018",
-    "repository": "https://github.com/CarstenKoenig/ElmSpartakiade2018",
+    "repository": "https://github.com/carstenkoenig/elmspartakiade2018.git",
     "license": "BSD3",
     "source-directories": [
         "."
